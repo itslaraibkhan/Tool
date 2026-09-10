@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pathshala Group — Fee Portal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#ffffff;
+    --surface:#f7f7f8;
+    --surface-2:#f1f1f3;
+    --line:#e4e4e7;
+    --ink:#17171a;
+    --muted:#6b6b73;
+    --maroon:#8a1c3a;
+    --maroon-deep:#5c1027;
+    --maroon-tint:#fbeef2;
+    --blue:#1f7bff;
+    --blue-deep:#1258c4;
+    --blue-tint:#eaf3ff;
+    --radius-card:14px;
+    --radius-pill:999px;
+    --shadow-soft: 0 1px 2px rgba(23,23,26,.04), 0 8px 24px rgba(23,23,26,.06);
+    --ease: cubic-bezier(.22,.61,.36,1);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg); color:var(--ink);
+    font-family:'IBM Plex Sans', -apple-system, Segoe UI, Roboto, sans-serif;
+    -webkit-font-smoothing:antialiased; min-height:100vh; display:flex; flex-direction:column;
+  }
+  h1,h2,h3,.display{ font-family:'Fraunces', Georgia, serif; letter-spacing:-0.01em; margin:0; }
+  main{flex:1 0 auto;}
+
+  /* ---------- Top bar ---------- */
+  .topbar{
+    display:flex;align-items:center;justify-content:space-between;gap:20px;
+    padding:18px 32px; border-bottom:1px solid var(--line); position:sticky; top:0; background:rgba(255,255,255,.92);
+    backdrop-filter:blur(8px); z-index:40; flex-wrap:wrap;
+  }
+  .brand{display:flex;align-items:center;gap:12px;}
+  .brand-mark{
+    width:34px;height:34px;border-radius:9px; flex-shrink:0;
+    background:linear-gradient(135deg, var(--maroon) 0%, var(--maroon-deep) 55%, var(--blue) 130%);
+  }
+  .brand-text .kicker{font-size:11px;color:var(--muted);letter-spacing:.04em;}
+  .brand-text h1{font-size:19px;font-weight:600;}
+
+  .topbar-right{display:flex;align-items:center;gap:14px;flex-wrap:wrap;}
+
+  /* Search */
+  .search-wrap{position:relative;}
+  .search-box{
+    display:flex;align-items:center;gap:8px;
+    background:var(--surface); border:1px solid var(--line); border-radius:var(--radius-pill);
+    padding:9px 14px; width:260px; transition:border-color .15s var(--ease), box-shadow .15s var(--ease), width .2s var(--ease);
+  }
+  .search-box:focus-within{ border-color:var(--blue); box-shadow:0 0 0 3px var(--blue-tint); width:300px; }
+  .search-box svg{width:15px;height:15px;color:var(--muted);flex-shrink:0;}
+  .search-box input{
+    border:none;outline:none;background:transparent;font:inherit;font-size:13.5px;width:100%;color:var(--ink);
+  }
+  .search-results{
+    position:absolute; top:calc(100% + 8px); right:0; width:380px; max-height:420px; overflow-y:auto;
+    background:var(--bg); border:1px solid var(--line); border-radius:12px; box-shadow:0 12px 32px rgba(23,23,26,.14);
+    display:none; z-index:50;
+  }
+  .search-results.open{display:block;}
+  .search-empty{padding:22px 18px; font-size:13px; color:var(--muted); text-align:center;}
+  .search-item{
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    padding:11px 16px; border-bottom:1px solid var(--surface-2);
+  }
+  .search-item:last-child{border-bottom:none;}
+  .search-item-info h5{font-size:13.5px;font-weight:600;font-family:'IBM Plex Sans';margin:0;}
+  .search-item-info span{font-size:11.5px;color:var(--muted);}
+  .search-item-actions{display:flex;gap:6px;flex-shrink:0;}
+  .chip-btn{
+    font-size:11px;font-weight:600;padding:5px 10px;border-radius:var(--radius-pill);border:1px solid var(--line);
+    background:var(--bg);cursor:pointer;transition:background .15s var(--ease), color .15s var(--ease), border-color .15s var(--ease);
+  }
+  .chip-btn.maroon:hover{ background:var(--maroon); color:#fff; border-color:var(--maroon); }
+  .chip-btn.blue:hover{ background:var(--blue); color:#fff; border-color:var(--blue); }
+
+  .breadcrumb{ display:flex;align-items:center;gap:6px;flex-wrap:wrap; font-size:13px;color:var(--muted); }
+  .breadcrumb button{ background:none;border:none;font:inherit;color:var(--muted);cursor:pointer;padding:4px 2px;border-radius:6px; }
+  .breadcrumb button:hover{color:var(--ink);text-decoration:underline;}
+  .breadcrumb .current{color:var(--ink);font-weight:600;}
+  .breadcrumb .sep{color:#c9c9cf;}
+
+  .back-btn{
+    display:none;align-items:center;gap:6px;
+    background:var(--surface);border:1px solid var(--line); padding:9px 14px;border-radius:var(--radius-pill);
+    font-size:13.5px;font-weight:600;color:var(--ink);cursor:pointer;
+    transition:background .15s var(--ease), transform .15s var(--ease);
+  }
+  .back-btn:hover{background:var(--surface-2);}
+  .back-btn:active{transform:scale(.97);}
+  .back-btn svg{width:14px;height:14px;}
+
+  /* ---------- View container / transitions ---------- */
+  .stage{ position:relative; padding:40px 32px 70px; max-width:1180px; margin:0 auto; width:100%; }
+  .view{ display:none; }
+  .view.active{ display:block; animation: viewIn .46s var(--ease); }
+  @keyframes viewIn{ from{ opacity:0; transform:translateY(14px) scale(.99); } to{ opacity:1; transform:translateY(0) scale(1); } }
+  @media (prefers-reduced-motion: reduce){ .view.active{ animation:none; } }
+
+  /* ---------- Landing ---------- */
+  .hero{ padding:12px 0 40px; max-width:640px; }
+  .hero .kicker{
+    display:inline-block;font-size:12px;color:var(--maroon);font-weight:600;
+    background:var(--maroon-tint);padding:5px 11px;border-radius:var(--radius-pill); margin-bottom:16px;
+  }
+  .hero h2{font-size:38px;line-height:1.12;font-weight:600;color:var(--ink);}
+  .hero p{margin-top:14px;font-size:15.5px;color:var(--muted);line-height:1.55;}
+
+  .portal-grid{ display:grid; grid-template-columns:1fr 1fr 1.15fr; gap:20px; align-items:stretch; }
+  @media (max-width:900px){ .portal-grid{grid-template-columns:1fr;} }
+
+  .portal-card{
+    position:relative; border-radius:var(--radius-card); border:1px solid var(--line); background:var(--bg);
+    padding:28px 24px 24px; display:flex;flex-direction:column; cursor:pointer;
+    transition:transform .2s var(--ease), box-shadow .2s var(--ease), border-color .2s var(--ease);
+    text-align:left; min-height:230px;
+  }
+  .portal-card:hover{ transform:translateY(-3px); box-shadow:var(--shadow-soft); }
+  .portal-card:active{ transform:translateY(-1px) scale(.995); }
+  .portal-card .accent{ width:38px;height:5px;border-radius:3px;margin-bottom:20px; }
+  .portal-card h3{font-size:21px;font-weight:600;margin-bottom:8px;}
+  .portal-card .desc{font-size:13.5px;color:var(--muted);line-height:1.5;flex-grow:1;}
+  .portal-card .cta{ margin-top:18px;font-size:13px;font-weight:600;display:flex;align-items:center;gap:6px; }
+  .portal-card .cta svg{width:13px;height:13px;transition:transform .18s var(--ease);}
+  .portal-card:hover .cta svg{transform:translateX(3px);}
+
+  .pc-pathshala .accent{background:var(--maroon);} .pc-pathshala .cta{color:var(--maroon);}
+  .pc-vpd .accent{background:var(--blue);} .pc-vpd .cta{color:var(--blue);}
+
+  .pc-mip{
+    background:linear-gradient(160deg, var(--maroon-deep) 0%, var(--maroon) 45%, var(--blue-deep) 130%);
+    border:none;color:#fff;
+  }
+  .pc-mip .accent{background:rgba(255,255,255,.55);}
+  .pc-mip h3{color:#fff;} .pc-mip .desc{color:rgba(255,255,255,.82);} .pc-mip .cta{color:#fff;}
+  .pc-mip .tag{
+    position:absolute;top:22px;right:22px; font-size:10.5px;font-weight:600;letter-spacing:.03em;
+    background:rgba(255,255,255,.16);padding:4px 10px;border-radius:var(--radius-pill); color:#fff;
+  }
+  .pc-mip:hover{ box-shadow:0 10px 30px rgba(92,16,39,.28); }
+
+  .stats-row{ display:flex; gap:28px; margin-top:36px; flex-wrap:wrap; }
+  .stat{ }
+  .stat .num{ font-family:'Fraunces'; font-size:26px; font-weight:600; }
+  .stat .lbl{ font-size:12px; color:var(--muted); margin-top:2px; }
+
+  /* ---------- Section heading ---------- */
+  .section-head{ margin-bottom:26px; display:flex; align-items:flex-start; justify-content:space-between; gap:16px; flex-wrap:wrap; }
+  .section-head .eyebrow{ font-size:12px;font-weight:600;color:var(--muted);margin-bottom:6px; }
+  .section-head .eyebrow.mode-pathshala{color:var(--maroon);}
+  .section-head .eyebrow.mode-vpd{color:var(--blue);}
+  .section-head h2{font-size:27px;font-weight:600;}
+  .section-head .count{font-size:13.5px;color:var(--muted);margin-top:4px;}
+  .type-badge{
+    display:inline-block; font-size:11px; font-weight:600; padding:4px 10px; border-radius:var(--radius-pill);
+    background:var(--surface-2); color:var(--muted); margin-left:8px; vertical-align:middle;
+  }
+
+  /* ---------- Region grid ---------- */
+  .region-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(230px,1fr)); gap:14px; }
+  .region-card{
+    border:1px solid var(--line);border-radius:12px;background:var(--bg); padding:18px 18px 16px;cursor:pointer;text-align:left;
+    transition:border-color .15s var(--ease), transform .15s var(--ease), box-shadow .15s var(--ease);
+  }
+  .region-card:hover{ transform:translateY(-2px); box-shadow:var(--shadow-soft); }
+  .region-card .r-no{font-size:11px;font-weight:600;color:var(--muted);}
+  .region-card h4{font-size:16px;font-weight:600;margin-top:6px;font-family:'IBM Plex Sans';}
+  .region-card .r-sub{font-size:12.5px;color:var(--muted);margin-top:2px;}
+  .region-card .r-count{
+    margin-top:14px;font-size:12px;font-weight:600; display:inline-flex;align-items:center;gap:5px;padding:4px 9px;border-radius:var(--radius-pill);
+  }
+  .mode-pathshala .region-card .r-count{ background:var(--maroon-tint); color:var(--maroon); }
+  .mode-vpd .region-card .r-count{ background:var(--blue-tint); color:var(--blue); }
+  .mode-pathshala .region-card:hover{ border-color:var(--maroon); }
+  .mode-vpd .region-card:hover{ border-color:var(--blue); }
+
+  /* ---------- Center grid ---------- */
+  .center-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(210px,1fr)); gap:12px; }
+  .center-card{
+    border:1px solid var(--line);border-radius:11px;background:var(--surface); padding:16px 16px;cursor:pointer;text-align:left;
+    transition:border-color .15s var(--ease), background .15s var(--ease), transform .15s var(--ease);
+  }
+  .center-card:hover{ transform:translateY(-2px); background:var(--bg); box-shadow:var(--shadow-soft); }
+  .center-card .ct-row{display:flex;align-items:center;justify-content:space-between;gap:8px;}
+  .center-card h4{font-size:14.5px;font-weight:600;font-family:'IBM Plex Sans';}
+  .center-card .type-mini{font-size:10px;font-weight:700;padding:2px 7px;border-radius:var(--radius-pill);background:var(--surface-2);color:var(--muted);flex-shrink:0;}
+  .center-card .c-arrow{margin-top:10px;font-size:12px;color:var(--muted);display:flex;align-items:center;gap:5px;}
+  .mode-pathshala .center-card:hover{ border-color:var(--maroon); }
+  .mode-vpd .center-card:hover{ border-color:var(--blue); }
+
+  /* ---------- Fee cards ---------- */
+  .fee-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(220px,1fr)); gap:16px; }
+  .fee-card{
+    border:1px solid var(--line);border-radius:13px; background:var(--bg); padding:20px 18px;
+    display:flex;flex-direction:column;gap:8px; min-height:140px;
+  }
+  .fee-card .cat{font-size:13.5px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.03em;}
+  .fee-card .empty-state{ flex-grow:1;display:flex;flex-direction:column;justify-content:center; color:var(--muted);font-size:12.5px;line-height:1.5; }
+  .fee-card .empty-state .dot{ width:6px;height:6px;border-radius:50%;background:#c9c9cf;display:inline-block;margin-right:6px; }
+  .fee-card .price-row{display:flex;align-items:baseline;gap:9px;flex-wrap:wrap;}
+  .fee-card .mrp{font-size:13.5px;color:var(--muted);text-decoration:line-through;}
+  .fee-card .final{font-size:24px;font-weight:700;font-family:'Fraunces';}
+  .mode-pathshala .fee-card .final{color:var(--maroon);}
+  .mode-vpd .fee-card .final{color:var(--blue);}
+  .fee-card .save-tag{font-size:11px;font-weight:600;color:#1a8a4a;background:#eafbf1;padding:3px 8px;border-radius:var(--radius-pill);display:inline-block;width:max-content;}
+
+  .vpd-single{ max-width:100%; }
+
+  /* ---------- footer note ---------- */
+  .data-note{
+    margin-top:34px;padding:16px 18px;border-radius:12px; background:var(--surface);border:1px solid var(--line);
+    font-size:12.5px;color:var(--muted);line-height:1.6;
+  }
+
+  /* ---------- site footer ---------- */
+  .site-footer{
+    flex-shrink:0; border-top:1px solid var(--line); padding:22px 32px; background:var(--surface);
+    display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap;
+  }
+  .site-footer .fmark{ display:flex; align-items:center; gap:10px; }
+  .site-footer .fmark .dot{ width:8px;height:8px;border-radius:50%; background:linear-gradient(135deg, var(--maroon), var(--blue)); }
+  .site-footer p{ margin:0; font-size:12px; color:var(--muted); }
+  .site-footer .credit{ font-size:12px; color:var(--muted); }
+  .site-footer .credit b{ color:var(--ink); font-weight:600; }
+
+  ::selection{ background:var(--maroon-tint); }
+  button{font-family:inherit;}
+  a{color:inherit;}
+
+  @media (max-width:640px){
+    .topbar{padding:14px 18px;}
+    .stage{padding:28px 18px 50px;}
+    .search-box{width:170px;}
+    .search-box:focus-within{width:200px;}
+    .search-results{width:280px;}
+    .site-footer{padding:18px;flex-direction:column;text-align:center;}
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand">
+    <div class="brand-mark"></div>
+    <div class="brand-text">
+      <div class="kicker">PATHSHALA GROUP</div>
+      <h1>Fee Portal</h1>
+    </div>
+  </div>
+
+  <div id="breadcrumb" class="breadcrumb"></div>
+
+  <div class="topbar-right">
+    <div class="search-wrap">
+      <div class="search-box">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+        <input id="searchInput" type="text" placeholder="Search center or region..." oninput="onSearch(this.value)" onfocus="onSearch(this.value)">
+      </div>
+      <div id="searchResults" class="search-results"></div>
+    </div>
+    <button class="back-btn" id="backBtn" onclick="goBack()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M15 18l-6-6 6-6"/></svg>
+      Back
+    </button>
+  </div>
+</div>
+
+<main>
+<div class="stage">
+
+  <!-- LANDING -->
+  <div class="view active" id="view-landing">
+    <div class="hero">
+      <span class="kicker">SELECT A FEE STRUCTURE</span>
+      <h2>One portal for every batch, region and center.</h2>
+      <p>Choose a track to look up fees by region and center, or head to the MIP portal to compare test-series plans. Use the search bar above to jump straight to any center.</p>
+    </div>
+
+    <div class="portal-grid">
+      <button class="portal-card pc-pathshala" onclick="openMode('pathshala')">
+        <div class="accent"></div>
+        <h3>Pathshala Fee</h3>
+        <div class="desc">Class-wise fees for 8th, 9th, 10th, and JEE / NEET batches for 11th, 12th and Droppers — plus MHTCET / KCET where applicable — organised by region and center.</div>
+        <div class="cta">View regions
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </div>
+      </button>
+
+      <button class="portal-card pc-vpd" onclick="openMode('vpd')">
+        <div class="accent"></div>
+        <h3>VPD Fee</h3>
+        <div class="desc">11th (2 Yr / 1 Yr), 12th and Dropper fees for the Vertical Program Division, mapped across the same region and center network.</div>
+        <div class="cta">View regions
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </div>
+      </button>
+
+      <button class="portal-card pc-mip" onclick="openMIP()">
+        <span class="tag">EXTERNAL PORTAL</span>
+        <div class="accent"></div>
+        <h3>MIP</h3>
+        <div class="desc">Compare MIP Basic, Pro and Pro Max test-series plans — pricing, coupons and full test breakdowns on the dedicated MIP site.</div>
+        <div class="cta">Open MIP site
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M7 17L17 7M7 7h10v10"/></svg>
+        </div>
+      </button>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat"><div class="num">9</div><div class="lbl">Regions</div></div>
+      <div class="stat"><div class="num">72</div><div class="lbl">Centers</div></div>
+      <div class="stat"><div class="num">9+</div><div class="lbl">Batch categories</div></div>
+    </div>
+  </div>
+
+  <!-- REGION LIST -->
+  <div class="view" id="view-regions">
+    <div class="section-head">
+      <div>
+        <div class="eyebrow" id="regions-eyebrow"></div>
+        <h2 id="regions-title"></h2>
+        <div class="count" id="regions-count"></div>
+      </div>
+    </div>
+    <div class="region-grid" id="regions-grid"></div>
+  </div>
+
+  <!-- CENTER LIST -->
+  <div class="view" id="view-centers">
+    <div class="section-head">
+      <div>
+        <div class="eyebrow" id="centers-eyebrow"></div>
+        <h2 id="centers-title"></h2>
+        <div class="count" id="centers-count"></div>
+      </div>
+    </div>
+    <div class="center-grid" id="centers-grid"></div>
+  </div>
+
+  <!-- FEE VIEW -->
+  <div class="view" id="view-fees">
+    <div class="section-head">
+      <div>
+        <div class="eyebrow" id="fees-eyebrow"></div>
+        <h2 id="fees-title"></h2>
+        <div class="count" id="fees-count"></div>
+      </div>
+    </div>
+    <div class="fee-grid" id="fees-grid"></div>
+    <div class="data-note">Fees shown are the counsellor "flat" price against the listed fee, inclusive of GST and security deposit where applicable. Figures are drawn from the latest shared fee sheet — always confirm against the master sheet before quoting.</div>
+  </div>
+
+</div>
+</main>
+
+<footer class="site-footer">
+  <div class="fmark">
+    <span class="dot"></span>
+    <p>&copy; <span id="yearNow"></span> Pathshala Group. All rights reserved.</p>
+  </div>
+  <div class="credit">Made with care by <b>Shazeb Chowdhary</b></div>
+</footer>
+
+<script>
+document.getElementById('yearNow').textContent = new Date().getFullYear();
+
+/* =========================================================
+   DATA
+   ========================================================= */
+const REGIONS = [{"id":1,"sub":"Patna","centers":[{"name":"Ballia","type":"SOB","pathshala":{"Class 8":{"fee":50200,"flat":34040},"Class 9":{"fee":52200,"flat":36400},"Class 10":{"fee":54200,"flat":37580},"11th JEE":{"fee":125900,"flat":95000},"11th NEET":{"fee":125900,"flat":95000},"12th JEE":{"fee":72700,"flat":46000},"12th NEET":{"fee":72700,"flat":46000},"Dropper JEE":{"fee":78700,"flat":55701},"Dropper NEET":{"fee":78700,"flat":51505}},"vpd":{"11th (2 Yr)":{"fee":113666,"flat":null},"11th (1 Yr)":{"fee":64965,"flat":null},"12th":{"fee":64965,"flat":35999},"Dropper":{"fee":73688,"flat":35999}}},{"name":"Darbhanga - Kathalbari","type":"Franchise","pathshala":{"Class 8":{"fee":52700,"flat":36400},"Class 9":{"fee":55200,"flat":37580},"Class 10":{"fee":57200,"flat":39940},"11th JEE":{"fee":130900,"flat":98775},"11th NEET":{"fee":130900,"flat":98775},"12th JEE":{"fee":77200,"flat":49000},"12th NEET":{"fee":75700,"flat":49000},"Dropper JEE":{"fee":81700,"flat":57819},"Dropper NEET":{"fee":81700,"flat":53455}},"vpd":{"11th (2 Yr)":{"fee":118028,"flat":null},"11th (1 Yr)":{"fee":67873,"flat":null},"12th":{"fee":67873,"flat":35999},"Dropper":{"fee":76596,"flat":35999}}},{"name":"Deoria","type":"SOB","pathshala":{"Class 8":{"fee":50200,"flat":32860},"Class 9":{"fee":52200,"flat":37580},"Class 10":{"fee":54200,"flat":39940},"11th JEE":{"fee":125900,"flat":95000},"11th NEET":{"fee":125900,"flat":95000},"12th JEE":{"fee":72700,"flat":44000},"12th NEET":{"fee":72700,"flat":44000},"Dropper JEE":{"fee":78700,"flat":55701},"Dropper NEET":{"fee":78700,"flat":51505}},"vpd":{"11th (2 Yr)":{"fee":113666,"flat":null},"11th (1 Yr)":{"fee":64965,"flat":null},"12th":{"fee":64965,"flat":35999},"Dropper":{"fee":73688,"flat":35999}}},{"name":"Ghazipur","type":"SOB","pathshala":{"Class 8":{"fee":50200,"flat":34040},"Class 9":{"fee":52200,"flat":37580},"Class 10":{"fee":54200,"flat":39940},"11th JEE":{"fee":125900,"flat":95000},"11th NEET":{"fee":125900,"flat":95000},"12th JEE":{"fee":72700,"flat":44000},"12th NEET":{"fee":72700,"flat":44000},"Dropper JEE":{"fee":78700,"flat":55701},"Dropper NEET":{"fee":78700,"flat":51505}},"vpd":{"11th (2 Yr)":{"fee":113666,"flat":null},"11th (1 Yr)":{"fee":64965,"flat":null},"12th":{"fee":64965,"flat":35999},"Dropper":{"fee":73688,"flat":35999}}},{"name":"Bihar Sharif-Nalanda","type":"Franchise","pathshala":{"Class 8":{"fee":50200,"flat":34040},"Class 9":{"fee":52200,"flat":37580},"Class 10":{"fee":54200,"flat":38760},"11th JEE":{"fee":125900,"flat":95000},"11th NEET":{"fee":125900,"flat":95000},"12th JEE":{"fee":72700,"flat":44000},"12th NEET":{"fee":72700,"flat":44000},"Dropper JEE":{"fee":78700,"flat":55701},"Dropper NEET":{"fee":78700,"flat":51505}},"vpd":{"11th (2 Yr)":{"fee":113666,"flat":null},"11th (1 Yr)":{"fee":64965,"flat":null},"12th":{"fee":64965,"flat":35999},"Dropper":{"fee":73688,"flat":35999}}},{"name":"Patna","type":"SOB","pathshala":{"Class 8":{"fee":52700,"flat":35220},"Class 9":{"fee":55200,"flat":37580},"Class 10":{"fee":57200,"flat":39940},"11th JEE":{"fee":131900,"flat":99530},"11th NEET":{"fee":131900,"flat":99530},"12th JEE":{"fee":77200,"flat":49000},"12th NEET":{"fee":77200,"flat":49000},"Dropper JEE":{"fee":81700,"flat":57819},"Dropper NEET":{"fee":81700,"flat":53455}},"vpd":{"11th (2 Yr)":{"fee":118028,"flat":null},"11th (1 Yr)":{"fee":67873,"flat":null},"12th":{"fee":67873,"flat":35999},"Dropper":{"fee":76596,"flat":35999}}},{"name":"Purnea","type":"SOB","pathshala":{"Class 8":{"fee":50200,"flat":34040},"Class 9":{"fee":52200,"flat":37580},"Class 10":{"fee":54200,"flat":39940},"11th JEE":{"fee":125900,"flat":95000},"11th NEET":{"fee":125900,"flat":95000},"12th JEE":{"fee":73200,"flat":48000},"12th NEET":{"fee":73200,"flat":48000},"Dropper JEE":{"fee":79700,"flat":56407},"Dropper NEET":{"fee":79700,"flat":52155}},"vpd":{"11th (2 Yr)":{"fee":113666,"flat":null},"11th (1 Yr)":{"fee":64965,"flat":null},"12th":{"fee":64965,"flat":35999},"Dropper":{"fee":73688,"flat":35999}}},{"name":"Samastipur","type":"Franchise","pathshala":{"Class 8":{"fee":52700,"flat":35220},"Class 9":{"fee":55200,"flat":37580},"Class 10":{"fee":57200,"flat":38170},"11th JEE":{"fee":130900,"flat":98775},"11th NEET":{"fee":130900,"flat":98775},"12th JEE":{"fee":75700,"flat":48000},"12th NEET":{"fee":75700,"flat":48000},"Dropper JEE":{"fee":81700,"flat":57819},"Dropper NEET":{"fee":81700,"flat":53455}},"vpd":{"11th (2 Yr)":{"fee":118028,"flat":null},"11th (1 Yr)":{"fee":67873,"flat":null},"12th":{"fee":67873,"flat":35999},"Dropper":{"fee":76596,"flat":35999}}},{"name":"Saharsa","type":"Franchise","pathshala":{"Class 8":{"fee":48200,"flat":35220},"Class 9":{"fee":50200,"flat":37580},"Class 10":{"fee":52200,"flat":38170},"11th JEE":{"fee":125900,"flat":95000},"11th NEET":{"fee":125900,"flat":95000},"12th JEE":{"fee":73200,"flat":43000},"12th NEET":{"fee":73200,"flat":43000},"Dropper JEE":{"fee":79700,"flat":56407},"Dropper NEET":{"fee":79700,"flat":52155}},"vpd":{"11th (2 Yr)":{"fee":118028,"flat":null},"11th (1 Yr)":{"fee":67873,"flat":null},"12th":{"fee":67873,"flat":35999},"Dropper":{"fee":76596,"flat":35999}}},{"name":"Sitamarhi","type":"Franchise","pathshala":{"Class 8":{"fee":48200,"flat":34040},"Class 9":{"fee":50200,"flat":36400},"Class 10":{"fee":52200,"flat":36990},"11th JEE":{"fee":130900,"flat":98775},"11th NEET":{"fee":130900,"flat":98775},"12th JEE":{"fee":77200,"flat":43000},"12th NEET":{"fee":75700,"flat":43000},"Dropper JEE":{"fee":81700,"flat":57819},"Dropper NEET":{"fee":81700,"flat":53455}},"vpd":{"11th (2 Yr)":{"fee":118028,"flat":null},"11th (1 Yr)":{"fee":67873,"flat":null},"12th":{"fee":67873,"flat":35999},"Dropper":{"fee":76596,"flat":35999}}}]},{"id":2,"sub":"Jharkhand","centers":[{"name":"Deoghar","type":"SOB","pathshala":{"Class 8":{"fee":50200,"flat":35920},"Class 9":{"fee":52200,"flat":37580},"Class 10":{"fee":54200,"flat":39940},"11th JEE":{"fee":128900,"flat":97265},"11th NEET":{"fee":128900,"flat":97265},"12th JEE":{"fee":74200,"flat":48000},"12th NEET":{"fee":74700,"flat":48000},"Dropper JEE":{"fee":78200,"flat":55348},"Dropper NEET":{"fee":80200,"flat":52480}},"vpd":{"12th":{"fee":67873,"flat":35999}}},{"name":"Gaya","type":"Franchise","pathshala":{"Class 8":{"fee":52700,"flat":35220},"Class 9":{"fee":55200,"flat":37580},"Class 10":{"fee":57200,"flat":38760},"11th JEE":{"fee":128400,"flat":96887},"11th NEET":{"fee":128400,"flat":96887},"12th JEE":{"fee":75700,"flat":45000},"12th NEET":{"fee":75700,"flat":45000},"Dropper JEE":{"fee":83200,"flat":58878},"Dropper NEET":{"fee":83200,"flat":54430}},"vpd":{"11th (2 Yr)":{"fee":118028,"flat":null},"11th (1 Yr)":{"fee":67873,"flat":null},"12th":{"fee":67873,"flat":35999},"Dropper":{"fee":76596,"flat":35999}}},{"name":"Giridih","type":"Franchise","pathshala":{"Class 8":{"fee":50200,"flat":35220},"Class 9":{"fee":52200,"flat":37580},"Class 10":{"fee":54200,"flat":39940},"11th JEE":{"fee":131400,"flat":99152},"11th NEET":{"fee":131400,"flat":99152},"12th JEE":{"fee":77200,"flat":44000},"12th NEET":{"fee":77200,"flat":44000},"Dropper JEE":{"fee":80200,"flat":56760},"Dropper NEET":{"fee":80200,"flat":52480}},"vpd":{"11th (2 Yr)":{"fee":113666,"flat":null},"11th (1 Yr)":{"fee":64965,"flat":null},"12th":{"fee":64965,"flat":35999},"Dropper":{"fee":73688,"flat":35999}}},{"name":"Hazaribagh","type":"Franchise","pathshala":{"Class 8":{"fee":52700,"flat":35220},"Class 9":{"fee":55200,"flat":35220},"Class 10":{"fee":57200,"flat":36400},"11th JEE":{"fee":127400,"flat":96132},"11th NEET":{"fee":124900,"flat":94245},"12th JEE":{"fee":75700,"flat":46000},"12th NEET":{"fee":77700,"flat":46000},"Dropper JEE":{"fee":81200,"flat":57466},"Dropper NEET":{"fee":81200,"flat":53130}},"vpd":{"11th (2 Yr)":{"fee":118028,"flat":null},"11th (1 Yr)":{"fee":67873,"flat":null},"12th":{"fee":67873,"flat":35999},"Dropper":{"fee":76596,"flat":35999}}},{"name":"Murshidabad (West Bengal)","type":"Franchise","pathshala":{"Class 8":{"fee":52700,"flat":32860},"Class 9":{"fee":55700,"flat":37580},"Class 10":{"fee":57700,"flat":38760},"11th JEE":{"fee":133900,"flat":101040},"11th NEET":{"fee":136400,"flat":102927},"12th JEE":{"fee":78700,"flat":47000},"12th NEET":{"fee":78700,"flat":47000},"Dropper JEE":{"fee":84200,"flat":59584},"Dropper NEET":{"fee":84200,"flat":55080}},"vpd":{"11th (2 Yr)":{"fee":126750,"flat":null},"11th (1 Yr)":{"fee":70780,"flat":null},"12th":{"fee":70780,"flat":36499},"Dropper":{"fee":79503,"flat":36499}}},{"name":"Nadia","type":"SOB","pathshala":{"Class 8":{"fee":52700,"flat":36400},"Class 9":{"fee":55700,"flat":37580},"Class 10":{"fee":56700,"flat":39940},"11th JEE":{"fee":126900,"flat":95755},"11th NEET":{"fee":126900,"flat":95755},"12th JEE":{"fee":72700,"flat":46000},"12th NEET":{"fee":72700,"flat":46000},"Dropper JEE":{"fee":78200,"flat":55348},"Dropper NEET":{"fee":80200,"flat":52480}},"vpd":{"11th (2 Yr)":{"fee":113666,"flat":null},"11th (1 Yr)":{"fee":64965,"flat":null},"12th":{"fee":64965,"flat":35999},"Dropper":{"fee":73688,"flat":35999}}},{"name":"Aurangabad","type":"Franchise","pathshala":{"Class 8":{"fee":48200,"flat":35220},"Class 9":{"fee":50200,"flat":37580},"Class 10":{"fee":52200,"flat":38170},"11th JEE":{"fee":125900,"flat":95000},"11th NEET":{"fee":125900,"flat":95000},"12th JEE":{"fee":72700,"flat":43000},"12th NEET":{"fee":72700,"flat":43000},"Dropper JEE":{"fee":78700,"flat":55701},"Dropper NEET":{"fee":78700,"flat":51505}},"vpd":{"11th (2 Yr)":{"fee":118028,"flat":null},"11th (1 Yr)":{"fee":67873,"flat":null},"12th":{"fee":67873,"flat":35999},"Dropper":{"fee":76596,"flat":35999}}},{"name":"Sasaram","type":"Franchise","pathshala":{"Class 8":{"fee":48200,"flat":35220},"Class 9":{"fee":50200,"flat":37580},"Class 10":{"fee":52200,"flat":39940},"11th JEE":{"fee":125900,"flat":95000},"11th NEET":{"fee":125900,"flat":95000},"12th JEE":{"fee":72700,"flat":43000},"12th NEET":{"fee":72700,"flat":43000},"Dropper JEE":{"fee":78700,"flat":55701},"Dropper NEET":{"fee":78700,"flat":51505}},"vpd":{"11th (2 Yr)":{"fee":113666,"flat":null},"11th (1 Yr)":{"fee":64965,"flat":null},"12th":{"fee":64965,"flat":35999},"Dropper":{"fee":73688,"flat":35999}}}]},{"id":3,"sub":"Orissa/Chhattisgarh","centers":[{"name":"Balasore","type":"Franchise","pathshala":{"Class 8":{"fee":52200,"flat":32860},"Class 9":{"fee":54700,"flat":35220},"Class 10":{"fee":56200,"flat":36400},"11th JEE":{"fee":127400,"flat":96132},"11th NEET":{"fee":127400,"flat":96132},"12th JEE":{"fee":73700,"flat":44000},"12th NEET":{"fee":73700,"flat":44000},"Dropper JEE":{"fee":79700,"flat":56407},"Dropper NEET":{"fee":81200,"flat":53130}},"vpd":{"11th (2 Yr)":{"fee":118028,"flat":null},"11th (1 Yr)":{"fee":67873,"flat":null},"12th":{"fee":67873,"flat":35999},"Dropper":{"fee":76596,"flat":35999}}},{"name":"Berhampur (Odisha)","type":"Franchise","pathshala":{"Class 8":{"fee":52200,"flat":32860},"Class 9":{"fee":54700,"flat":36400},"Class 10":{"fee":56200,"flat":37580},"11th JEE":{"fee":127400,"flat":96132},"11th NEET":{"fee":127400,"flat":96132},"12th JEE":{"fee":73700,"flat":47000},"12th NEET":{"fee":73700,"flat":47000},"Dropper JEE":{"fee":79700,"flat":56407},"Dropper NEET":{"fee":81200,"flat":53130}},"vpd":{"11th (2 Yr)":{"fee":118028,"flat":null},"11th (1 Yr)":{"fee":67873,"flat":null},"12th":{"fee":67873,"flat":35999},"Dropper":{"fee":76596,"flat":35999}}},{"name":"Korba - City Center","type":"Franchise","pathshala":{"Class 8":{"fee":55200,"flat":null},"Class 9":{"fee":55200,"flat":null},"Class 10":{"fee":57200,"flat":null},"11th JEE":{"fee":122400,"flat":92357},"11th NEET":{"fee":122400,"flat":92357},"12th JEE":{"fee":70700,"flat":47000},"12th NEET":{"fee":70700,"flat":47000},"Dropper JEE":{"fee":76700,"flat":54289},"Dropper NEET":{"fee":78200,"flat":null}},"vpd":{"11th (2 Yr)":{"fee":113666,"flat":null},"11th (1 Yr)":{"fee":64965,"flat":null},"12th":{"fee":64965,"flat":35999},"Dropper":{"fee":73688,"flat":35999}}},{"name":"Korba - NTPC","type":"Franchise","pathshala":{"Class 8":{"fee":55200,"flat":32860},"Class 9":{"fee":55200,"flat":36400},"Class 10":{"fee":57200,"flat":37580},"11th JEE":{"fee":122400,"flat":92357},"11th NEET":{"fee":122400,"flat":92357},"12th JEE":{"fee":70700,"flat":47000},"12th NEET":{"fee":70700,"flat":47000},"Dropper JEE":{"fee":76700,"flat":null},"Dropper NEET":{"fee":78200,"flat":null}},"vpd":{"11th (2 Yr)":{"fee":113666,"flat":null},"11th (1 Yr)":{"fee":64965,"flat":null},"12th":{"fee":64965,"flat":null},"Dropper":{"fee":73688,"flat":null}}},{"name":"Raigarh","type":"Franchise","pathshala":{"Class 8":{"fee":55200,"flat":32860},"Class 9":{"fee":55200,"flat":37580},"Class 10":{"fee":57200,"flat":38170},"11th JEE":{"fee":119900,"flat":90470},"11th NEET":{"fee":119900,"flat":90470},"12th JEE":{"fee":71200,"flat":46000},"12th NEET":{"fee":71200,"flat":46000},"Dropper JEE":{"fee":76700,"flat":54289},"Dropper NEET":{"fee":76700,"flat":50205}},"vpd":{"11th (2 Yr)":{"fee":113666,"flat":null},"11th (1 Yr)":{"fee":64965,"flat":null},"12th":{"fee":64965,"flat":35999},"Dropper":{"fee":73688,"flat":35999}}},{"name":"Rourkela","type":"Franchise","pathshala":{"Class 8":{"fee":52200,"flat":32860},"Class 9":{"fee":54700,"flat":35220},"Class 10":{"fee":56200,"flat":36400},"11th JEE":{"fee":127400,"flat":96132},"11th NEET":{"fee":127400,"flat":96132},"12th JEE":{"fee":73700,"flat":47000},"12th NEET":{"fee":73700,"flat":47000},"Dropper JEE":{"fee":79700,"flat":56407},"Dropper NEET":{"fee":81200,"flat":53130}},"vpd":{"11th (2 Yr)":{"fee":118028,"flat":null},"11th (1 Yr)":{"fee":67873,"flat":null},"12th":{"fee":67873,"flat":35999},"Dropper":{"fee":76596,"flat":35999}}},{"name":"Cuttack","type":"Franchise","pathshala":{"Class 8":{"fee":52200,"flat":32860},"Class 9":{"fee":54700,"flat":36400},"Class 10":{"fee":56200,"flat":37580},"11th JEE":{"fee":127400,"flat":96132},"11th NEET":{"fee":127400,"flat":96132},"12th JEE":{"fee":73700,"flat":47000},"12th NEET":{"fee":73700,"flat":47000},"Dropper JEE":{"fee":79700,"flat":56407},"Dropper NEET":{"fee":81200,"flat":53130}},"vpd":{"11th (2 Yr)":{"fee":126750,"flat":null},"11th (1 Yr)":{"fee":70780,"flat":null},"12th":{"fee":70780,"flat":null},"Dropper":{"fee":79503,"flat":36499}}},{"name":"Sambalpur","type":"Franchise","pathshala":{"Class 8":{"fee":52700,"flat":32860},"Class 9":{"fee":54700,"flat":35220},"Class 10":{"fee":56200,"flat":36400},"11th JEE":{"fee":127400,"flat":96132},"11th NEET":{"fee":127400,"flat":96132},"12th JEE":{"fee":73700,"flat":47000},"12th NEET":{"fee":73700,"flat":47000},"Dropper JEE":{"fee":79700,"flat":56407},"Dropper NEET":{"fee":81200,"flat":53130}},"vpd":{"11th (2 Yr)":{"fee":118028,"flat":null},"11th (1 Yr)":{"fee":67873,"flat":null},"12th":{"fee":67873,"flat":35999},"Dropper":{"fee":76596,"flat":35999}}}]},{"id":4,"sub":"North","centers":[{"name":"Bijnor","type":"SOB","pathshala":{"Class 8":{"fee":52700,"flat":32860},"Class 9":{"fee":55200,"flat":35220},"Class 10":{"fee":57200,"flat":35810},"11th JEE":{"fee":119900,"flat":90470},"11th NEET":{"fee":119900,"flat":90470},"12th JEE":{"fee":71200,"flat":46000},"12th NEET":{"fee":72700,"flat":48000},"Dropper JEE":{"fee":78200,"flat":55348},"Dropper NEET":{"fee":78200,"flat":51180}},"vpd":{"11th (2 Yr)":{"fee":113666,"flat":null},"11th (1 Yr)":{"fee":64965,"flat":null},"12th":{"fee":64965,"flat":35999},"Dropper":{"fee":73688,"flat":35999}}},{"name":"Haldwani","type":"Franchise","pathshala":{"Class 8":{"fee":53200,"flat":32860},"Class 9":{"fee":55700,"flat":35220},"Class 10":{"fee":57700,"flat":37580},"11th JEE":{"fee":124900,"flat":94245},"11th NEET":{"fee":124900,"flat":94245},"12th JEE":{"fee":74200,"flat":46000},"12th NEET":{"fee":75700,"flat":46000},"Dropper JEE":{"fee":81200,"flat":57466},"Dropper NEET":{"fee":81200,"flat":53130}},"vpd":{"11th (2 Yr)":{"fee":118028,"flat":null},"11th (1 Yr)":{"fee":67873,"flat":null},"12th":{"fee":67873,"flat":35999},"Dropper":{"fee":76596,"flat":35999}}},{"name":"Narnaul - City","type":"Franchise","pathshala":{"Class 8":{"fee":50200,"flat":32860},"Class 9":{"fee":52200,"flat":35220},"Class 10":{"fee":54200,"flat":36400},"11th JEE":{"fee":109900,"flat":82920},"11th NEET":{"fee":119900,"flat":90470},"12th JEE":{"fee":76200,"flat":47000},"12th NEET":{"fee":72700,"flat":47000},"Dropper JEE":{"fee":78200,"flat":55348},"Dropper NEET":{"fee":78200,"flat":51180}},"vpd":{"11th (2 Yr)":{"fee":113666,"flat":null},"11th (1 Yr)":{"fee":64965,"flat":null},"12th":{"fee":64965,"flat":35999},"Dropper":{"fee":73688,"flat":35999}}},{"name":"Sonipat","type":"SOB","pathshala":{"Class 8":{"fee":52700,"flat":32860},"Class 9":{"fee":55200,"flat":36400},"Class 10":{"fee":57200,"flat":36990},"11th JEE":{"fee":124900,"flat":94245},"11th NEET":{"fee":124900,"flat":94245},"12th JEE":{"fee":74700,"flat":46000},"12th NEET":{"fee":75700,"flat":46000},"Dropper JEE":{"fee":81200,"flat":57466},"Dropper NEET":{"fee":81200,"flat":53130}},"vpd":{"11th (2 Yr)":{"fee":118028,"flat":null},"11th (1 Yr)":{"fee":67873,"flat":null},"12th":{"fee":67873,"flat":35999},"Dropper":{"fee":76596,"flat":35999}}},{"name":"Jhansi","type":"SOB","pathshala":{"Class 8":{"fee":53200,"flat":35220},"Class 9":{"fee":55700,"flat":37580},"Class 10":{"fee":57700,"flat":39940},"11th JEE":{"fee":127400,"flat":96132},"11th NEET":{"fee":124900,"flat":94245},"12th JEE":{"fee":75700,"flat":49000},"12th NEET":{"fee":75700,"flat":49000},"Dropper JEE":{"fee":81200,"flat":57466},"Dropper NEET":{"fee":81200,"flat":53130}},"vpd":{"11th (2 Yr)":{"fee":118028,"flat":null},"11th (1 Yr)":{"fee":67873,"flat":null},"12th":{"fee":67873,"flat":35999},"Dropper":{"fee":76596,"flat":35999}}},{"name":"Mathura","type":"SOB","pathshala":{"Class 8":{"fee":53200,"flat":36400},"Class 9":{"fee":55700,"flat":37580},"Class 10":{"fee":57700,"flat":39940},"11th JEE":{"fee":129900,"flat":98020},"11th NEET":{"fee":129900,"flat":98020},"12th JEE":{"fee":76700,"flat":54000},"12th NEET":{"fee":76700,"flat":54000},"Dropper JEE":{"fee":81700,"flat":57819},"Dropper NEET":{"fee":81700,"flat":53455}},"vpd":null},{"name":"Shahjahanpur","type":"Franchise","pathshala":{"Class 8":{"fee":48200,"flat":34040},"Class 9":{"fee":50200,"flat":37580},"Class 10":{"fee":52200,"flat":38170},"11th JEE":{"fee":136400,"flat":102927},"11th NEET":{"fee":133900,"flat":101040},"12th JEE":{"fee":76700,"flat":43000},"12th NEET":{"fee":76700,"flat":43000},"Dropper JEE":{"fee":81700,"flat":57819},"Dropper NEET":{"fee":81700,"flat":53455}},"vpd":{"11th (2 Yr)":{"fee":118028,"flat":null},"11th (1 Yr)":{"fee":67873,"flat":null},"12th":{"fee":67873,"flat":35999},"Dropper":{"fee":76596,"flat":35999}}},{"name":"Lakhimpur Kheri","type":"Franchise","pathshala":{"Class 8":{"fee":48200,"flat":34040},"Class 9":{"fee":50200,"flat":37580},"Class 10":{"fee":52200,"flat":38170},"11th JEE":{"fee":136400,"flat":102927},"11th NEET":{"fee":133900,"flat":101040},"12th JEE":{"fee":76700,"flat":48000},"12th NEET":{"fee":76700,"flat":48000},"Dropper JEE":{"fee":81700,"flat":57819},"Dropper NEET":{"fee":81700,"flat":53455}},"vpd":{"11th (2 Yr)":{"fee":118028,"flat":null},"11th (1 Yr)":{"fee":67873,"flat":null},"12th":{"fee":67873,"flat":35999},"Dropper":{"fee":76596,"flat":35999}}}]},{"id":5,"sub":"UP South & MP","centers":[{"name":"Ayodhya","type":"SOB","pathshala":{"Class 8":{"fee":53200,"flat":35220},"Class 9":{"fee":55700,"flat":37580},"Class 10":{"fee":57700,"flat":39940},"11th JEE":{"fee":136400,"flat":102927},"11th NEET":{"fee":133900,"flat":101040},"12th JEE":{"fee":76700,"flat":48000},"12th NEET":{"fee":76700,"flat":48000},"Dropper JEE":{"fee":81700,"flat":57819},"Dropper NEET":{"fee":81700,"flat":53455}},"vpd":{"11th (2 Yr)":{"fee":126750,"flat":null},"11th (1 Yr)":{"fee":70780,"flat":null},"12th":{"fee":70780,"flat":36499},"Dropper":{"fee":79503,"flat":36499}}},{"name":"Chhatarpur","type":"Franchise","pathshala":{"Class 8":{"fee":53200,"flat":null},"Class 9":{"fee":55700,"flat":null},"Class 10":{"fee":57700,"flat":null},"11th JEE":{"fee":119900,"flat":90470},"11th NEET":{"fee":119900,"flat":90470},"12th JEE":{"fee":72700,"flat":48000},"12th NEET":{"fee":72700,"flat":48000},"Dropper JEE":{"fee":78200,"flat":55348},"Dropper NEET":{"fee":78200,"flat":55399}},"vpd":{"11th (2 Yr)":{"fee":113666,"flat":null},"11th (1 Yr)":{"fee":64965,"flat":null},"12th":{"fee":64965,"flat":null},"Dropper":{"fee":73688,"flat":null}}},{"name":"Jaunpur","type":"SOB","pathshala":{"Class 8":{"fee":50200,"flat":32860},"Class 9":{"fee":52200,"flat":37580},"Class 10":{"fee":54200,"flat":38760},"11th JEE":{"fee":119900,"flat":90470},"11th NEET":{"fee":119900,"flat":90470},"12th JEE":{"fee":74700,"flat":48000},"12th NEET":{"fee":72700,"flat":48000},"Dropper JEE":{"fee":78200,"flat":55348},"Dropper NEET":{"fee":78200,"flat":51180}},"vpd":{"11th (2 Yr)":{"fee":113666,"flat":null},"11th (1 Yr)":{"fee":64965,"flat":null},"12th":{"fee":64965,"flat":35999},"Dropper":{"fee":73688,"flat":35999}}},{"name":"Rae Bareli","type":"SOB","pathshala":{"Class 8":{"fee":53200,"flat":34040},"Class 9":{"fee":55700,"flat":37580},"Class 10":{"fee":57700,"flat":39940},"11th JEE":{"fee":124900,"flat":94245},"11th NEET":{"fee":124900,"flat":94245},"12th JEE":{"fee":75700,"flat":45000},"12th NEET":{"fee":75700,"flat":45000},"Dropper JEE":{"fee":81200,"flat":57466},"Dropper NEET":{"fee":81200,"flat":53130}},"vpd":{"11th (2 Yr)":{"fee":118028,"flat":null},"11th (1 Yr)":{"fee":67873,"flat":null},"12th":{"fee":67873,"flat":35999},"Dropper":{"fee":76596,"flat":35999}}},{"name":"Chhindwara","type":"SOB","pathshala":{"Class 8":{"fee":54200,"flat":32860},"Class 9":{"fee":56200,"flat":36400},"Class 10":{"fee":58200,"flat":36990},"11th JEE":{"fee":125900,"flat":95000},"11th NEET":{"fee":125900,"flat":95000},"12th JEE":{"fee":71200,"flat":48000},"12th NEET":{"fee":71200,"flat":48000},"Dropper JEE":{"fee":75700,"flat":53583},"Dropper NEET":{"fee":78200,"flat":51180}},"vpd":{"11th (2 Yr)":{"fee":113666,"flat":null},"11th (1 Yr)":{"fee":64965,"flat":null},"12th":{"fee":64965,"flat":35999},"Dropper":{"fee":73688,"flat":35999}}},{"name":"Rewa","type":"SOB","pathshala":{"Class 8":{"fee":50200,"flat":35220},"Class 9":{"fee":52200,"flat":37580},"Class 10":{"fee":54200,"flat":38170},"11th JEE":{"fee":125900,"flat":95000},"11th NEET":{"fee":125900,"flat":95000},"12th JEE":{"fee":72700,"flat":44000},"12th NEET":{"fee":72700,"flat":44000},"Dropper JEE":{"fee":78200,"flat":55348},"Dropper NEET":{"fee":81700,"flat":53455}},"vpd":{"11th (2 Yr)":{"fee":113666,"flat":null},"11th (1 Yr)":{"fee":64965,"flat":null},"12th":{"fee":64965,"flat":35999},"Dropper":{"fee":73688,"flat":35999}}},{"name":"Sagar","type":"Franchise","pathshala":{"Class 8":{"fee":52200,"flat":32860},"Class 9":{"fee":52200,"flat":35220},"Class 10":{"fee":54200,"flat":36400},"11th JEE":{"fee":122400,"flat":92357},"11th NEET":{"fee":119900,"flat":90470},"12th JEE":{"fee":72700,"flat":48000},"12th NEET":{"fee":70700,"flat":48000},"Dropper JEE":{"fee":75700,"flat":53583},"Dropper NEET":{"fee":78200,"flat":51180}},"vpd":{"11th (2 Yr)":{"fee":113666,"flat":null},"11th (1 Yr)":{"fee":64965,"flat":null},"12th":{"fee":64965,"flat":35999},"Dropper":{"fee":73688,"flat":35999}}},{"name":"Satna","type":"SOB","pathshala":{"Class 8":{"fee":50200,"flat":35220},"Class 9":{"fee":52200,"flat":36400},"Class 10":{"fee":54200,"flat":36990},"11th JEE":{"fee":125900,"flat":95000},"11th NEET":{"fee":116900,"flat":88205},"12th JEE":{"fee":70700,"flat":48000},"12th NEET":{"fee":72700,"flat":48000},"Dropper JEE":{"fee":75700,"flat":53583},"Dropper NEET":{"fee":78200,"flat":51180}},"vpd":{"11th (2 Yr)":{"fee":113666,"flat":null},"11th (1 Yr)":{"fee":64965,"flat":null},"12th":{"fee":64965,"flat":35999},"Dropper":{"fee":73688,"flat":35999}}}]},{"id":6,"sub":"North East Maharashtra","centers":[{"name":"Gondia","type":"Franchise","pathshala":{"Class 8":{"fee":55200,"flat":35220},"Class 9":{"fee":55200,"flat":37580},"Class 10":{"fee":57200,"flat":38760},"11th JEE":{"fee":125900,"flat":95000},"11th NEET":{"fee":125900,"flat":95000},"12th JEE":{"fee":71200,"flat":46000},"12th NEET":{"fee":71200,"flat":46000},"Dropper JEE":{"fee":76700,"flat":54289},"Dropper NEET":{"fee":79700,"flat":52155}},"vpd":{"11th (2 Yr)":{"fee":113666,"flat":null},"11th (1 Yr)":{"fee":64965,"flat":null},"12th":{"fee":64965,"flat":null},"Dropper":{"fee":73688,"flat":null}}},{"name":"Amrawati - Gadge Nagar","type":"Franchise","pathshala":{"Class 8":{"fee":48900,"flat":34040},"Class 9":{"fee":50900,"flat":37580},"Class 10":{"fee":58400,"flat":38760},"11th JEE":{"fee":136400,"flat":102927},"11th NEET":{"fee":129900,"flat":98020},"12th JEE":{"fee":78700,"flat":55000},"12th NEET":{"fee":81200,"flat":55000},"Dropper JEE":{"fee":81700,"flat":57819},"Dropper NEET":{"fee":81700,"flat":53455},"MHTCET 11th":{"fee":133200,"flat":98218},"MHTCET 12th":{"fee":73000,"flat":53530}},"vpd":{"11th (2 Yr)":{"fee":126750,"flat":null},"11th (1 Yr)":{"fee":70780,"flat":null},"12th":{"fee":70780,"flat":36499},"Dropper":{"fee":79503,"flat":36499}}},{"name":"Amrawati - Rajapeth","type":"Franchise","pathshala":{"Class 8":{"fee":48900,"flat":null},"Class 9":{"fee":50900,"flat":null},"Class 10":{"fee":58400,"flat":null},"11th JEE":{"fee":136400,"flat":102927},"11th NEET":{"fee":129900,"flat":98020},"12th JEE":{"fee":78700,"flat":55000},"12th NEET":{"fee":81200,"flat":55000},"Dropper JEE":{"fee":81700,"flat":null},"Dropper NEET":{"fee":81700,"flat":null},"MHTCET 11th":{"fee":133200,"flat":98218},"MHTCET 12th":{"fee":73000,"flat":53530}},"vpd":{"11th (2 Yr)":{"fee":126750,"flat":null},"11th (1 Yr)":{"fee":70780,"flat":null},"12th":{"fee":70780,"flat":null},"Dropper":{"fee":79503,"flat":null}}},{"name":"Chandrapur","type":"Franchise","pathshala":{"Class 8":{"fee":54200,"flat":35220},"Class 9":{"fee":56200,"flat":37580},"Class 10":{"fee":58200,"flat":38170},"11th JEE":{"fee":125900,"flat":95000},"11th NEET":{"fee":122400,"flat":92357},"12th JEE":{"fee":71200,"flat":46000},"12th NEET":{"fee":71200,"flat":46000},"Dropper JEE":{"fee":78200,"flat":55348},"Dropper NEET":{"fee":78200,"flat":51180},"MHTCET 11th":{"fee":133200,"flat":98218},"MHTCET 12th":{"fee":73000,"flat":53530}},"vpd":{"11th (2 Yr)":{"fee":113666,"flat":null},"11th (1 Yr)":{"fee":64965,"flat":null},"12th":{"fee":64965,"flat":35999},"Dropper":{"fee":73688,"flat":35999}}},{"name":"Yavatmal","type":"Franchise","pathshala":{"Class 8":{"fee":54200,"flat":37580},"Class 9":{"fee":56200,"flat":37580},"Class 10":{"fee":58200,"flat":34040},"11th JEE":{"fee":131400,"flat":99152},"11th NEET":{"fee":131400,"flat":99152},"12th JEE":{"fee":72700,"flat":49000},"12th NEET":{"fee":72700,"flat":49000},"Dropper JEE":{"fee":75700,"flat":53583},"Dropper NEET":{"fee":78200,"flat":null},"MHTCET 11th":{"fee":133200,"flat":98218},"MHTCET 12th":{"fee":73000,"flat":53530}},"vpd":{"11th (2 Yr)":{"fee":113666,"flat":null},"11th (1 Yr)":{"fee":64965,"flat":null},"12th":{"fee":64965,"flat":null},"Dropper":{"fee":73688,"flat":null}}},{"name":"Hingoli","type":"Franchise","pathshala":{"Class 8":{"fee":50200,"flat":32860},"Class 9":{"fee":52200,"flat":37580},"Class 10":{"fee":55200,"flat":38170},"11th JEE":{"fee":123400,"flat":93112},"11th NEET":{"fee":124400,"flat":93867},"12th JEE":{"fee":72700,"flat":48000},"12th NEET":{"fee":72700,"flat":48000},"Dropper JEE":{"fee":78700,"flat":55701},"Dropper NEET":{"fee":78700,"flat":51505},"MHTCET 11th":{"fee":133200,"flat":98218},"MHTCET 12th":{"fee":73000,"flat":53530}},"vpd":{"11th (2 Yr)":{"fee":113666,"flat":null},"11th (1 Yr)":{"fee":64965,"flat":null},"12th":{"fee":64965,"flat":35999},"Dropper":{"fee":73688,"flat":35999}}},{"name":"Parbhani","type":"Franchise","pathshala":{"Class 8":{"fee":48200,"flat":35220},"Class 9":{"fee":50200,"flat":36400},"Class 10":{"fee":53200,"flat":37580},"11th JEE":{"fee":123400,"flat":93112},"11th NEET":{"fee":124400,"flat":93867},"12th JEE":{"fee":72700,"flat":43000},"12th NEET":{"fee":72700,"flat":43000},"Dropper JEE":{"fee":78700,"flat":55701},"Dropper NEET":{"fee":78700,"flat":51505},"MHTCET 11th":{"fee":133200,"flat":98218},"MHTCET 12th":{"fee":73000,"flat":53530}},"vpd":{"11th (2 Yr)":{"fee":113666,"flat":null},"11th (1 Yr)":{"fee":64965,"flat":null},"12th":{"fee":64965,"flat":35999},"Dropper":{"fee":73688,"flat":35999}}},{"name":"Wardha","type":"Franchise","pathshala":{"Class 8":{"fee":55200,"flat":36400},"Class 9":{"fee":57200,"flat":37580},"Class 10":{"fee":59700,"flat":38170},"11th JEE":{"fee":131400,"flat":99152},"11th NEET":{"fee":131400,"flat":99152},"12th JEE":{"fee":72700,"flat":43000},"12th NEET":{"fee":72700,"flat":43000},"Dropper JEE":{"fee":75700,"flat":53583},"Dropper NEET":{"fee":78200,"flat":51180},"MHTCET 11th":{"fee":133200,"flat":98218},"MHTCET 12th":{"fee":73000,"flat":53530}},"vpd":{"11th (2 Yr)":{"fee":113666,"flat":null},"11th (1 Yr)":{"fee":64965,"flat":null},"12th":{"fee":64965,"flat":35999},"Dropper":{"fee":73688,"flat":35999}}}]},{"id":7,"sub":"North Maharashtra","centers":[{"name":"Ahmednagar","type":"Franchise","pathshala":{"Class 8":{"fee":48900,"flat":32860},"Class 9":{"fee":50900,"flat":35220},"Class 10":{"fee":58400,"flat":37580},"11th JEE":{"fee":136400,"flat":102927},"11th NEET":{"fee":136400,"flat":102927},"12th JEE":{"fee":78700,"flat":54000},"12th NEET":{"fee":81200,"flat":54000},"Dropper JEE":{"fee":85200,"flat":60290},"Dropper NEET":{"fee":85200,"flat":55730},"MHTCET 11th":{"fee":133200,"flat":98218},"MHTCET 12th":{"fee":73000,"flat":53530}},"vpd":null},{"name":"Baramati","type":"Franchise","pathshala":{"Class 8":{"fee":41867,"flat":32860},"Class 9":{"fee":43475,"flat":36400},"Class 10":{"fee":44775,"flat":37580},"11th JEE":{"fee":127900,"flat":96510},"11th NEET":{"fee":125900,"flat":95000},"12th JEE":{"fee":77200,"flat":55000},"12th NEET":{"fee":76200,"flat":55000},"Dropper JEE":{"fee":78700,"flat":55701},"Dropper NEET":{"fee":81700,"flat":53455},"MHTCET 11th":{"fee":133200,"flat":98218},"MHTCET 12th":{"fee":73000,"flat":53530}},"vpd":{"11th (2 Yr)":{"fee":113666,"flat":null},"11th (1 Yr)":{"fee":64965,"flat":null},"12th":{"fee":64965,"flat":35999},"Dropper":{"fee":73688,"flat":35999}}},{"name":"Beed","type":"Franchise","pathshala":{"Class 8":{"fee":41867,"flat":32860},"Class 9":{"fee":43475,"flat":37580},"Class 10":{"fee":44775,"flat":38170},"11th JEE":{"fee":122400,"flat":92357},"11th NEET":{"fee":122400,"flat":92357},"12th JEE":{"fee":72700,"flat":45000},"12th NEET":{"fee":72700,"flat":45000},"Dropper JEE":{"fee":78700,"flat":55701},"Dropper NEET":{"fee":78700,"flat":51505},"MHTCET 11th":{"fee":133200,"flat":98218},"MHTCET 12th":{"fee":73000,"flat":53530}},"vpd":{"11th (2 Yr)":{"fee":113666,"flat":null},"11th (1 Yr)":{"fee":64965,"flat":null},"12th":{"fee":64965,"flat":35999},"Dropper":{"fee":73688,"flat":35999}}},{"name":"Buldhana","type":"Franchise","pathshala":{"Class 8":{"fee":36780,"flat":32860},"Class 9":{"fee":38650,"flat":37580},"Class 10":{"fee":40840,"flat":38170},"11th JEE":{"fee":124400,"flat":93867},"11th NEET":{"fee":122400,"flat":92357},"12th JEE":{"fee":72700,"flat":47000},"12th NEET":{"fee":72700,"flat":47000},"Dropper JEE":{"fee":78700,"flat":55701},"Dropper NEET":{"fee":78700,"flat":51505},"MHTCET 11th":{"fee":133200,"flat":98218},"MHTCET 12th":{"fee":73000,"flat":53530}},"vpd":{"11th (2 Yr)":{"fee":113666,"flat":null},"11th (1 Yr)":{"fee":64965,"flat":null},"12th":{"fee":64965,"flat":35999},"Dropper":{"fee":73688,"flat":35999}}},{"name":"Dhule","type":"Franchise","pathshala":{"Class 8":{"fee":50200,"flat":34040},"Class 9":{"fee":52200,"flat":37580},"Class 10":{"fee":54200,"flat":38170},"11th JEE":{"fee":124400,"flat":93867},"11th NEET":{"fee":123400,"flat":93112},"12th JEE":{"fee":72700,"flat":51000},"12th NEET":{"fee":73200,"flat":51000},"Dropper JEE":{"fee":79700,"flat":56407},"Dropper NEET":{"fee":81700,"flat":53455},"MHTCET 11th":{"fee":133200,"flat":98218},"MHTCET 12th":{"fee":73000,"flat":53530}},"vpd":{"11th (2 Yr)":{"fee":113666,"flat":null},"11th (1 Yr)":{"fee":64965,"flat":null},"12th":{"fee":64965,"flat":35999},"Dropper":{"fee":73688,"flat":35999}}},{"name":"Jalgaon","type":"SOB","pathshala":{"Class 8":{"fee":50200,"flat":34040},"Class 9":{"fee":52200,"flat":37580},"Class 10":{"fee":54200,"flat":38170},"11th JEE":{"fee":125900,"flat":95000},"11th NEET":{"fee":125900,"flat":95000},"12th JEE":{"fee":74200,"flat":51000},"12th NEET":{"fee":74200,"flat":51000},"Dropper JEE":{"fee":81700,"flat":57819},"Dropper NEET":{"fee":81700,"flat":53455},"MHTCET 11th":{"fee":133200,"flat":98218},"MHTCET 12th":{"fee":73000,"flat":53530}},"vpd":{"11th (2 Yr)":{"fee":113666,"flat":null},"11th (1 Yr)":{"fee":64965,"flat":null},"12th":{"fee":64965,"flat":35999},"Dropper":{"fee":73688,"flat":35999}}},{"name":"Jalna","type":"Franchise","pathshala":{"Class 8":{"fee":49700,"flat":34040},"Class 9":{"fee":50700,"flat":37580},"Class 10":{"fee":53200,"flat":38170},"11th JEE":{"fee":123400,"flat":93112},"11th NEET":{"fee":122400,"flat":92357},"12th JEE":{"fee":72700,"flat":53000},"12th NEET":{"fee":72700,"flat":53000},"Dropper JEE":{"fee":78700,"flat":55701},"Dropper NEET":{"fee":78700,"flat":51505},"MHTCET 11th":{"fee":133200,"flat":98218},"MHTCET 12th":{"fee":73000,"flat":53530}},"vpd":{"11th (2 Yr)":{"fee":113666,"flat":null},"11th (1 Yr)":{"fee":64965,"flat":null},"12th":{"fee":64965,"flat":35999},"Dropper":{"fee":73688,"flat":35999}}}]},{"id":8,"sub":"South Maharashtra & Karnataka","centers":[{"name":"Bidar","type":"Franchise","pathshala":{"Class 8":{"fee":49700,"flat":35220},"Class 9":{"fee":50700,"flat":37580},"Class 10":{"fee":53200,"flat":39940},"11th JEE":{"fee":127900,"flat":96510},"11th NEET":{"fee":127900,"flat":96510},"12th JEE":{"fee":76200,"flat":51000},"12th NEET":{"fee":76200,"flat":51000},"Dropper JEE":{"fee":81700,"flat":57819},"Dropper NEET":{"fee":81700,"flat":57819},"KCET 11th":{"fee":115500,"flat":null},"KCET 12th":{"fee":66200,"flat":null}},"vpd":{"11th (2 Yr)":{"fee":113666,"flat":null},"11th (1 Yr)":{"fee":64965,"flat":null},"12th":{"fee":64965,"flat":38999},"Dropper":{"fee":73688,"flat":38999}}},{"name":"Dharwad","type":"Franchise","pathshala":{"Class 8":{"fee":47900,"flat":35220},"Class 9":{"fee":51400,"flat":37580},"Class 10":{"fee":58500,"flat":38760},"11th JEE":{"fee":139900,"flat":105570},"11th NEET":{"fee":139900,"flat":105570},"12th JEE":{"fee":82700,"flat":53000},"12th NEET":{"fee":82700,"flat":53000},"Dropper JEE":{"fee":84200,"flat":null},"Dropper NEET":{"fee":92200,"flat":null}},"vpd":{"11th (2 Yr)":{"fee":126750,"flat":null},"11th (1 Yr)":{"fee":70780,"flat":null},"12th":{"fee":70780,"flat":null},"Dropper":{"fee":79503,"flat":null}}},{"name":"Hubli","type":"Franchise","pathshala":{"Class 8":{"fee":50500,"flat":35220},"Class 9":{"fee":53700,"flat":37580},"Class 10":{"fee":59200,"flat":39940},"11th JEE":{"fee":139900,"flat":105570},"11th NEET":{"fee":139900,"flat":105570},"12th JEE":{"fee":82700,"flat":55000},"12th NEET":{"fee":82700,"flat":55000},"Dropper JEE":{"fee":84200,"flat":59584},"Dropper NEET":{"fee":88200,"flat":62408},"KCET 11th":{"fee":115500,"flat":null},"KCET 12th":{"fee":66200,"flat":null}},"vpd":{"11th (2 Yr)":{"fee":126750,"flat":null},"11th (1 Yr)":{"fee":70780,"flat":null},"12th":{"fee":70780,"flat":48999},"Dropper":{"fee":79503,"flat":48999}}},{"name":"Kalaburagi","type":"Franchise","pathshala":{"Class 8":{"fee":52200,"flat":34040},"Class 9":{"fee":53700,"flat":37580},"Class 10":{"fee":56200,"flat":38170},"11th JEE":{"fee":136400,"flat":102927},"11th NEET":{"fee":136400,"flat":102927},"12th JEE":{"fee":82700,"flat":55000},"12th NEET":{"fee":82700,"flat":55000},"Dropper JEE":{"fee":88700,"flat":62761},"Dropper NEET":{"fee":88700,"flat":62761},"KCET 11th":{"fee":115500,"flat":null},"KCET 12th":{"fee":66200,"flat":null}},"vpd":{"11th (2 Yr)":{"fee":118028,"flat":null},"11th (1 Yr)":{"fee":67873,"flat":null},"12th":{"fee":67873,"flat":49999},"Dropper":{"fee":76596,"flat":49999}}},{"name":"Kolhapur","type":"SOB","pathshala":{"Class 8":{"fee":63700,"flat":34040},"Class 9":{"fee":65700,"flat":37580},"Class 10":{"fee":67700,"flat":39940},"11th JEE":{"fee":130900,"flat":98775},"11th NEET":{"fee":130900,"flat":98775},"12th JEE":{"fee":79200,"flat":54000},"12th NEET":{"fee":79200,"flat":54000},"Dropper JEE":{"fee":81200,"flat":57466},"Dropper NEET":{"fee":84700,"flat":55405},"MHTCET 11th":{"fee":133200,"flat":98218},"MHTCET 12th":{"fee":73000,"flat":53530}},"vpd":{"11th (2 Yr)":{"fee":118028,"flat":null},"11th (1 Yr)":{"fee":67873,"flat":null},"12th":{"fee":67873,"flat":35999},"Dropper":{"fee":76596,"flat":35999}}},{"name":"Sangli","type":"Franchise","pathshala":{"Class 8":{"fee":63700,"flat":32860},"Class 9":{"fee":65700,"flat":35220},"Class 10":{"fee":67700,"flat":36400},"11th JEE":{"fee":131400,"flat":99152},"11th NEET":{"fee":131400,"flat":99152},"12th JEE":{"fee":79200,"flat":51000},"12th NEET":{"fee":79200,"flat":51000},"Dropper JEE":{"fee":81700,"flat":57819},"Dropper NEET":{"fee":81700,"flat":53455},"MHTCET 11th":{"fee":133200,"flat":98218},"MHTCET 12th":{"fee":73000,"flat":53530}},"vpd":{"11th (2 Yr)":{"fee":113666,"flat":null},"11th (1 Yr)":{"fee":64965,"flat":null},"12th":{"fee":64965,"flat":35999},"Dropper":{"fee":73688,"flat":35999}}},{"name":"Satara","type":"Franchise","pathshala":{"Class 8":{"fee":63700,"flat":34040},"Class 9":{"fee":65700,"flat":37580},"Class 10":{"fee":67700,"flat":38170},"11th JEE":{"fee":131400,"flat":99152},"11th NEET":{"fee":131400,"flat":99152},"12th JEE":{"fee":79200,"flat":51000},"12th NEET":{"fee":79200,"flat":51000},"Dropper JEE":{"fee":81700,"flat":57819},"Dropper NEET":{"fee":81700,"flat":53455},"MHTCET 11th":{"fee":133200,"flat":98218},"MHTCET 12th":{"fee":73000,"flat":53530}},"vpd":{"11th (2 Yr)":{"fee":113666,"flat":null},"11th (1 Yr)":{"fee":64965,"flat":null},"12th":{"fee":64965,"flat":35999},"Dropper":{"fee":73688,"flat":35999}}},{"name":"Solapur","type":"Franchise","pathshala":{"Class 8":{"fee":63700,"flat":34040},"Class 9":{"fee":65700,"flat":37580},"Class 10":{"fee":67700,"flat":39940},"11th JEE":{"fee":131400,"flat":99152},"11th NEET":{"fee":131400,"flat":99152},"12th JEE":{"fee":79200,"flat":54000},"12th NEET":{"fee":79200,"flat":54000},"Dropper JEE":{"fee":78200,"flat":55348},"Dropper NEET":{"fee":81700,"flat":53455},"MHTCET 11th":{"fee":133200,"flat":98218},"MHTCET 12th":{"fee":73000,"flat":53530}},"vpd":{"11th (2 Yr)":{"fee":113666,"flat":null},"11th (1 Yr)":{"fee":64965,"flat":null},"12th":{"fee":64965,"flat":35999},"Dropper":{"fee":73688,"flat":35999}}},{"name":"Belagavi","type":"Franchise","pathshala":{"Class 8":{"fee":47900,"flat":35220},"Class 9":{"fee":51400,"flat":37580},"Class 10":{"fee":58500,"flat":39940},"11th JEE":{"fee":139900,"flat":105570},"11th NEET":{"fee":139900,"flat":105570},"12th JEE":{"fee":82700,"flat":49000},"12th NEET":{"fee":82700,"flat":49000},"Dropper JEE":{"fee":84200,"flat":59584},"Dropper NEET":{"fee":92200,"flat":65232},"KCET 11th":{"fee":115500,"flat":null},"KCET 12th":{"fee":66200,"flat":null}},"vpd":{"11th (2 Yr)":{"fee":126750,"flat":null},"11th (1 Yr)":{"fee":70780,"flat":null},"12th":{"fee":70780,"flat":48999},"Dropper":{"fee":79503,"flat":48999}}},{"name":"Vijayapura","type":"Franchise","pathshala":{"Class 8":{"fee":52200,"flat":32860},"Class 9":{"fee":53700,"flat":36400},"Class 10":{"fee":56200,"flat":39940},"11th JEE":{"fee":136400,"flat":102927},"11th NEET":{"fee":136400,"flat":102927},"12th JEE":{"fee":82700,"flat":47000},"12th NEET":{"fee":82700,"flat":47000},"Dropper JEE":{"fee":88700,"flat":62761},"Dropper NEET":{"fee":88700,"flat":62761},"KCET 11th":{"fee":115500,"flat":null},"KCET 12th":{"fee":66200,"flat":null}},"vpd":{"11th (2 Yr)":{"fee":113666,"flat":null},"11th (1 Yr)":{"fee":64965,"flat":null},"12th":{"fee":64965,"flat":49999},"Dropper":{"fee":73688,"flat":49999}}}]},{"id":9,"sub":"Assam","centers":[{"name":"Barpeta","type":"Franchise","pathshala":{"Class 8":{"fee":58700,"flat":34040},"Class 9":{"fee":60700,"flat":36400},"Class 10":{"fee":64200,"flat":36990},"11th JEE":{"fee":119900,"flat":90470},"11th NEET":{"fee":119900,"flat":90470},"12th JEE":{"fee":72700,"flat":46000},"12th NEET":{"fee":72700,"flat":46000},"Dropper JEE":{"fee":78200,"flat":55348},"Dropper NEET":{"fee":80700,"flat":52805}},"vpd":{"11th (2 Yr)":{"fee":113666,"flat":null},"11th (1 Yr)":{"fee":64965,"flat":null},"12th":{"fee":64965,"flat":35999},"Dropper":{"fee":73688,"flat":35999}}},{"name":"Dibrugarh","type":"Franchise","pathshala":{"Class 8":{"fee":58700,"flat":36400},"Class 9":{"fee":60700,"flat":37580},"Class 10":{"fee":64200,"flat":38760},"11th JEE":{"fee":119900,"flat":90470},"11th NEET":{"fee":119900,"flat":90470},"12th JEE":{"fee":72700,"flat":45000},"12th NEET":{"fee":72700,"flat":45000},"Dropper JEE":{"fee":78200,"flat":55348},"Dropper NEET":{"fee":80700,"flat":52805}},"vpd":{"11th (2 Yr)":{"fee":113666,"flat":null},"11th (1 Yr)":{"fee":64965,"flat":null},"12th":{"fee":64965,"flat":35999},"Dropper":{"fee":73688,"flat":35999}}},{"name":"Jorhat","type":"Franchise","pathshala":{"Class 8":{"fee":58700,"flat":36400},"Class 9":{"fee":60700,"flat":37580},"Class 10":{"fee":64200,"flat":38760},"11th JEE":{"fee":119900,"flat":90470},"11th NEET":{"fee":119900,"flat":90470},"12th JEE":{"fee":72700,"flat":48000},"12th NEET":{"fee":72700,"flat":48000},"Dropper JEE":{"fee":78200,"flat":55348},"Dropper NEET":{"fee":78200,"flat":51180}},"vpd":{"11th (2 Yr)":{"fee":113666,"flat":null},"11th (1 Yr)":{"fee":64965,"flat":null},"12th":{"fee":64965,"flat":35999},"Dropper":{"fee":73688,"flat":35999}}},{"name":"Nagaon","type":"Franchise","pathshala":{"Class 8":{"fee":58700,"flat":35220},"Class 9":{"fee":60700,"flat":36400},"Class 10":{"fee":64200,"flat":38760},"11th JEE":{"fee":122900,"flat":92735},"11th NEET":{"fee":122900,"flat":92735},"12th JEE":{"fee":75700,"flat":46000},"12th NEET":{"fee":78700,"flat":46000},"Dropper JEE":{"fee":81200,"flat":57466},"Dropper NEET":{"fee":81200,"flat":53130}},"vpd":{"11th (2 Yr)":{"fee":118028,"flat":null},"11th (1 Yr)":{"fee":67873,"flat":null},"12th":{"fee":67873,"flat":35999},"Dropper":{"fee":76596,"flat":35999}}},{"name":"Tezpur","type":"Franchise","pathshala":{"Class 8":{"fee":58700,"flat":35220},"Class 9":{"fee":60700,"flat":37580},"Class 10":{"fee":64200,"flat":38760},"11th JEE":{"fee":119900,"flat":90470},"11th NEET":{"fee":119900,"flat":90470},"12th JEE":{"fee":72700,"flat":53000},"12th NEET":{"fee":72700,"flat":53000},"Dropper JEE":{"fee":78200,"flat":55348},"Dropper NEET":{"fee":78200,"flat":53100}},"vpd":{"11th (2 Yr)":{"fee":113666,"flat":null},"11th (1 Yr)":{"fee":64965,"flat":null},"12th":{"fee":64965,"flat":35999},"Dropper":{"fee":73688,"flat":35999}}}]}]
+;
+
+const PATHSHALA_ORDER = ["Class 8","Class 9","Class 10","11th JEE","11th NEET","12th JEE","12th NEET","Dropper JEE","Dropper NEET","MHTCET 11th","MHTCET 12th","KCET 11th","KCET 12th"];
+const VPD_ORDER = ["11th (2 Yr)","11th (1 Yr)","12th","Dropper"];
+
+const MIP_LINK = "https://himanshusuman-cell.github.io/MIP-Tool/";
+
+/* =========================================================
+   NAVIGATION STATE
+   ========================================================= */
+let history = ["landing"];
+let current = { mode:null, region:null, center:null };
+
+function render(){
+  document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));
+  const top = history[history.length-1];
+  document.getElementById("view-"+top).classList.add("active");
+  document.getElementById("backBtn").style.display = history.length>1 ? "inline-flex" : "none";
+  renderBreadcrumb();
+  window.scrollTo({top:0, behavior:"smooth"});
+}
+function push(view){ history.push(view); render(); }
+function goBack(){ if(history.length>1){ history.pop(); render(); } }
+function goHome(){ history=["landing"]; current={mode:null,region:null,center:null}; render(); }
+
+let crumbFns = [];
+function renderBreadcrumb(){
+  const el = document.getElementById("breadcrumb");
+  crumbFns = [];
+  const crumbs = [{label:"Fee Portal", action: goHome}];
+  if(current.mode){
+    crumbs.push({label: current.mode==="pathshala" ? "Pathshala Fee" : "VPD Fee",
+      action:()=>{ history=["landing","regions"]; render(); }});
+  }
+  if(current.region){
+    crumbs.push({label: current.region.sub, action:()=>{ history=["landing","regions","centers"]; render(); }});
+  }
+  if(current.center){
+    crumbs.push({label: current.center.name});
+  }
+  el.innerHTML = crumbs.map((c,i)=>{
+    const isLast = i===crumbs.length-1;
+    const sep = i>0 ? '<span class="sep">/</span>' : '';
+    if(isLast) return sep + '<span class="current">'+c.label+'</span>';
+    const idx = crumbFns.push(c.action)-1;
+    return sep + '<button onclick="crumbFns['+idx+']()">'+c.label+'</button>';
+  }).join("");
+}
+
+/* =========================================================
+   OPEN MODE -> REGIONS
+   ========================================================= */
+function openMode(mode){
+  current = { mode, region:null, center:null };
+  const isP = mode==="pathshala";
+
+  document.getElementById("view-regions").className = "view mode-"+mode;
+  document.getElementById("regions-eyebrow").className = "eyebrow mode-"+mode;
+  document.getElementById("regions-eyebrow").textContent = isP ? "PATHSHALA FEE" : "VPD FEE";
+  document.getElementById("regions-title").textContent = "Select a region";
+  document.getElementById("regions-count").textContent = REGIONS.length + " regions";
+
+  const grid = document.getElementById("regions-grid");
+  grid.innerHTML = REGIONS.map(r => `
+    <button class="region-card" onclick="openRegion(${r.id})">
+      <div class="r-no">REGION ${r.id}</div>
+      <h4>${r.sub}</h4>
+      <div class="r-sub">${r.centers.length} centers</div>
+      <div class="r-count">View centers</div>
+    </button>
+  `).join("");
+
+  history = ["landing","regions"];
+  render();
+}
+
+/* =========================================================
+   OPEN REGION -> CENTERS
+   ========================================================= */
+function openRegion(regionId){
+  const region = REGIONS.find(r=>r.id===regionId);
+  current.region = region;
+  current.center = null;
+
+  const mode = current.mode;
+  document.getElementById("view-centers").className = "view mode-"+mode;
+  document.getElementById("centers-eyebrow").className = "eyebrow mode-"+mode;
+  document.getElementById("centers-eyebrow").textContent = (mode==="pathshala" ? "PATHSHALA FEE" : "VPD FEE") + " · REGION " + region.id;
+  document.getElementById("centers-title").textContent = region.sub;
+  document.getElementById("centers-count").textContent = region.centers.length + " centers";
+
+  const grid = document.getElementById("centers-grid");
+  grid.innerHTML = region.centers.map(c => `
+    <button class="center-card" onclick="openCenter(${region.id}, '${c.name.replace(/'/g,"\\'")}')">
+      <div class="ct-row">
+        <h4>${c.name}</h4>
+        <span class="type-mini">${c.type}</span>
+      </div>
+      <div class="c-arrow">View fee
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+      </div>
+    </button>
+  `).join("");
+
+  push("centers");
+}
+
+/* =========================================================
+   FEE CARD RENDERING
+   ========================================================= */
+function feeCardHTML(label, entry){
+  if(!entry){
+    return `
+      <div class="fee-card">
+        <div class="cat">${label}</div>
+        <div class="empty-state"><span class="dot"></span>Not applicable / no data</div>
+      </div>`;
+  }
+  const fee = entry.fee, flat = entry.flat;
+  let priceHTML;
+  let saveHTML = "";
+  if(flat !== null && flat !== undefined && flat !== fee){
+    priceHTML = `<span class="mrp">Rs.${fee.toLocaleString('en-IN')}</span><span class="final">Rs.${flat.toLocaleString('en-IN')}</span>`;
+    const pct = Math.round((1 - flat/fee)*100);
+    if(pct > 0) saveHTML = `<span class="save-tag">Save ${pct}%</span>`;
+  } else {
+    priceHTML = `<span class="final">Rs.${fee.toLocaleString('en-IN')}</span>`;
+  }
+  return `
+    <div class="fee-card">
+      <div class="cat">${label}</div>
+      <div class="price-row">${priceHTML}</div>
+      ${saveHTML}
+    </div>`;
+}
+
+/* =========================================================
+   OPEN CENTER -> FEES
+   ========================================================= */
+function openCenter(regionId, centerName){
+  const region = REGIONS.find(r=>r.id===regionId);
+  const center = region.centers.find(c=>c.name===centerName);
+  current.region = region;
+  current.center = center;
+  const mode = current.mode;
+
+  document.getElementById("view-fees").className = "view mode-"+mode;
+  document.getElementById("fees-eyebrow").className = "eyebrow mode-"+mode;
+  document.getElementById("fees-eyebrow").textContent = (mode==="pathshala" ? "PATHSHALA FEE" : "VPD FEE") + " · " + region.sub;
+  document.getElementById("fees-title").innerHTML = center.name + ` <span class="type-badge">${center.type}</span>`;
+
+  const grid = document.getElementById("fees-grid");
+  const dataSet = mode==="pathshala" ? center.pathshala : center.vpd;
+  const order = mode==="pathshala" ? PATHSHALA_ORDER : VPD_ORDER;
+
+  if(!dataSet){
+    document.getElementById("fees-count").textContent = "No fee data available";
+    grid.innerHTML = feeCardHTML(mode==="pathshala" ? "Pathshala Fee" : "VPD Fee", null);
+  } else {
+    const visible = order.filter(k => dataSet[k] !== undefined);
+    document.getElementById("fees-count").textContent = visible.length + " batch categories";
+    grid.innerHTML = visible.map(cat => feeCardHTML(cat, dataSet[cat])).join("");
+  }
+
+  push("fees");
+}
+
+/* =========================================================
+   MIP — external link
+   ========================================================= */
+function openMIP(){
+  window.open(MIP_LINK, "_blank", "noopener");
+}
+
+/* =========================================================
+   GLOBAL SEARCH
+   ========================================================= */
+let ALL_CENTERS = [];
+REGIONS.forEach(r => r.centers.forEach(c => ALL_CENTERS.push({name:c.name, type:c.type, regionId:r.id, regionSub:r.sub})));
+
+function onSearch(q){
+  const box = document.getElementById("searchResults");
+  q = q.trim().toLowerCase();
+  if(!q){ box.classList.remove("open"); box.innerHTML=""; return; }
+
+  const matches = ALL_CENTERS.filter(c =>
+    c.name.toLowerCase().includes(q) || c.regionSub.toLowerCase().includes(q)
+  ).slice(0, 10);
+
+  if(matches.length === 0){
+    box.innerHTML = `<div class="search-empty">No center or region matches "${q}"</div>`;
+  } else {
+    box.innerHTML = matches.map(m => `
+      <div class="search-item">
+        <div class="search-item-info">
+          <h5>${m.name}</h5>
+          <span>Region ${m.regionId} · ${m.regionSub} · ${m.type}</span>
+        </div>
+        <div class="search-item-actions">
+          <button class="chip-btn maroon" onclick="jumpTo(${m.regionId}, '${m.name.replace(/'/g,"\\'")}', 'pathshala')">Pathshala</button>
+          <button class="chip-btn blue" onclick="jumpTo(${m.regionId}, '${m.name.replace(/'/g,"\\'")}', 'vpd')">VPD</button>
+        </div>
+      </div>
+    `).join("");
+  }
+  box.classList.add("open");
+}
+
+function jumpTo(regionId, centerName, mode){
+  current.mode = mode;
+  openCenter(regionId, centerName);
+  document.getElementById("searchResults").classList.remove("open");
+  document.getElementById("searchInput").value = "";
+  // rebuild breadcrumb path so back button behaves sensibly
+  const region = REGIONS.find(r=>r.id===regionId);
+  history = ["landing","regions","centers","fees"];
+  render();
+}
+
+document.addEventListener("click", (e)=>{
+  if(!e.target.closest(".search-wrap")){
+    document.getElementById("searchResults").classList.remove("open");
+  }
+});
+
+/* init */
+render();
+</script>
+
+</body>
+</html>
